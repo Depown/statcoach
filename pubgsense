@@ -1,0 +1,55 @@
+import json
+import requests
+
+
+
+header = {
+    "Authorization": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNWM3ZTI3MC0xYTA4LTAxMzYtYzU5NC0yZmZkMzhmZDU3ZmYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNTIyODI3NDI1LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXRjb2FjaCIsInNjb3BlIjoiY29tbXVuaXR5IiwibGltaXQiOjEwfQ.t2xB1pM0PFrhX0hA8ihQEV4X5swRPLO-HaKPLq7Xicg",
+    "Accept": "application/vnd.api+json"
+}
+new_matchlist = []
+old_matchlist = []
+odd_matchlist = []
+
+
+def get_matches(player):
+    url = "https://api.playbattlegrounds.com/shards/pc-eu/players?filter[playerNames]=" + player
+    rgm = requests.get(url, headers=header)
+    rgmj = rgm.json()
+    matches = []
+    for match in rgmj['data'][0]['relationships']['matches']['data']:
+        matches.append(match['id'])
+    return matches
+
+new_matchlist = get_matches("Depown")
+def fill_old():
+    with open("Matches.txt", "r") as text_file:
+        for line in text_file:
+            old_matchlist.append(line)
+
+def get_match_details(name):
+    kills = 0
+    for match in odd_matchlist:
+        url = "https://api.playbattlegrounds.com/shards/pc-na/matches/" + match
+        rgd = requests.get(url, headers=header)
+        rgdj = rgd.json()
+        for asset in rgdj["included"]:
+            if asset["type"] == "participant" and asset["attributes"]["stats"]["name"] == name:
+                kills = kills + asset["attributes"]["stats"]["kills"]
+    with open("kills.txt", "rw") as text_file:
+        kills = kills + text_file
+        print(kills, file=text_file)
+
+
+def fill_odd():
+    for match in new_matchlist:
+        if match not in old_matchlist:
+            odd_matchlist.append(match)
+
+
+fill_old()
+fill_odd()
+
+with open("Matches.txt", "w") as text_file:
+    for match in odd_matchlist:
+        print(match, file=text_file)
